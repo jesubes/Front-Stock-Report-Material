@@ -6,6 +6,9 @@ import { Card, Button, Input, CardContent, CardHeader, CardDescription } from 's
 import './App.css';
 import { Toaster, toast } from 'sonner'
 
+//constant
+import {ENV} from './utils/constants.js'
+
 //Diferentes estados de la app
 const APP_STATUS = {
   IDLE: 'idle',   //al entrar
@@ -35,7 +38,8 @@ function App() {
   useEffect(() => {
     const fetchQrCode = async () => {
       try {
-        const response = await fetch('http://localhost:4000/api/qrcode')
+        const response = await fetch(`${ENV.BASE_API}/${ENV.API_ROUTES.QR_GENERATE}`)
+        // const response = await fetch('http://localhost:4000/api/qrcode')
         const data = await response.text(); //Obtener el HTML en formtato de texto
         setQrHtml(data)
       } catch (error) {
