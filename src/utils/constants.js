@@ -8,6 +8,6 @@ export const ENV = {
         REPORTS:'report',
         EXCEL:'excel',
         EXCEL_TO_JSON:'excel/json',
-        CONTACT_JSON:'excel/contact'
+        CONTACT_JSON:'contact'
     }
 }
