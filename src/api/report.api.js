@@ -3,6 +3,7 @@ import {ENV} from '../utils/constants.js'
 export const reportByNumber = async (number, name, jsonData) => {
 
     let data = {}
+    
     try{
         // const response = await fetch(`http://localhost:4000/api/report?number=${number}&name=${name}`, {
         const response = await fetch(`${ENV.BASE_API}/${ENV.API_ROUTES.REPORTS}?number=${number}&name=${name}`, {

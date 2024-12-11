@@ -28,7 +28,6 @@ export const uploadFileContact = async (file) => {
     let data = {}
 
     try {
-        // const response = await fetch(`http://localhost:4000/api/excel/contact`, {
         const response = await fetch(`${ENV.BASE_API}/${ENV.API_ROUTES.CONTACT_JSON}`, {
             method: 'POST',
             body: formData
@@ -36,7 +35,7 @@ export const uploadFileContact = async (file) => {
 
         if (!response.ok) return [new Error(`Error uploadin file: ${response.statusText}`)]
         data = await response.json();
-
+        
         return [undefined, data]
     } catch (error) {
         return [error, null]

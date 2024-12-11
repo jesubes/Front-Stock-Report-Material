@@ -19,14 +19,16 @@ const APP_STATUS = {
 }
 
 //Diccionario de estado de boton
-const BUTTON_TEXT = {
-  [APP_STATUS.READY_UPLOAD]: 'Subir archivo',
-  [APP_STATUS.UPLOADING]: 'Subiendo ...'
-};
+
+let buttonDisableContact = true;
+let showButtonContact = false;
+let buttonExcelDisable = true;
+let showButtonExcel = false;
 
 
 //
 function App() {
+
   const [appStatus, setAppStatus] = useState(APP_STATUS.IDLE)
   const [data, setData] = useState([])
   const [file, setFile] = useState(null)
@@ -55,11 +57,9 @@ function App() {
     event.preventDefault();
 
     //condicion para retorno vacio
-    if (appStatus !== APP_STATUS.READY_UPLOAD || !file) {
+    if (!file) {
       return
     }
-
-    setAppStatus(APP_STATUS.UPLOADING)
 
     const [err, newData] = await uploadFileExcel(file) //'TODO CARGAR EL ARCHIVO LA MEMOERIA DE LA API'
 
@@ -72,23 +72,20 @@ function App() {
     }
 
     //mostrar el archivo subido correto
-    // setAppStatus(APP_STATUS.READY_USAGE)
-    if (newData) setData(newData)
+    setAppStatus(APP_STATUS.READY_USAGE)
+    if (newData) {
+      setData(newData)
+      buttonExcelDisable=true;
+    }
     toast.success('Archivo MATERIALES subido correctamente')
   }
 
+  /** ------ */
   //accion del boton de carga de contactos
   const handleSubmitContact = async (event) => {
     event.preventDefault();
 
-    //condicion para retornar vacio
-    // if(appStatus !== APP_STATUS.READY || !fileContact){
-    //   return
-    // }
-
-
     const [err, newData] = await uploadFileContact(fileContact)  //TODO llamar a la api asi proceso los CONTACTOS
-
 
     //mostar el error
     if (err) {
@@ -96,25 +93,33 @@ function App() {
       return
     }
 
-    if (newData) setDataContact(newData)
+    if (newData) {
+      setDataContact(newData)
+      buttonDisableContact = true
+    }
     toast.success('Archivo CONTACTO subido correctamente')
   }
 
+  /** ---- */
   const handleInputChangeContact = async (event) => {
     const [file] = event.target.files ?? []
 
     if (file) {
       setFileContact(file);
+      buttonDisableContact = false
+      showButtonContact = true 
     }
   }
 
-  //accion de ingreso del archivo
+  //accion de ingreso del archivo del excel de sap
   const handleInputChange = (event) => {
     const [file] = event.target.files ?? []
 
     if (file) {
       setFile(file);
-      setAppStatus(APP_STATUS.READY_UPLOAD)
+      // setAppStatus(APP_STATUS.READY_UPLOAD);
+      showButtonExcel =true;
+      buttonExcelDisable = false;
     }
   }
 
@@ -125,38 +130,14 @@ function App() {
   }
 
   //Mostart el button
-  const showButton = appStatus === APP_STATUS.READY_UPLOAD || appStatus === APP_STATUS.UPLOADING;
+  // const showButton = appStatus === APP_STATUS.READY_UPLOAD || appStatus === APP_STATUS.UPLOADING;
   const showQR = true
-  const showButtonContact = true
   
 
   //
   return (
     <div className="App">
       <Toaster />
-      <Card centered fluid>
-        <CardContent>
-          <CardHeader>Cargar Archivo excel de reporte de Materiales</CardHeader>
-          <CardDescription>
-            <form onSubmit={handleSubmit}>
-              <label >
-                <Input
-                  disabled={appStatus === APP_STATUS.UPLOADING}
-                  name='file'
-                  onChange={handleInputChange}
-                  type='file'
-                  accept='.xlsx'
-                />
-              </label>
-              {showButton && (
-                <Button secondary disabled={appStatus === APP_STATUS.UPLOADING}>
-                  {BUTTON_TEXT[appStatus]}
-                </Button>
-              )}
-            </form>
-          </CardDescription>
-        </CardContent>
-      </Card>
 
       <Card centered fluid>
         {showQR && (
@@ -172,14 +153,37 @@ function App() {
           </CardContent>
         )}
 
-
         {showHtmlQr && (
           <div dangerouslySetInnerHTML={{ __html: qrHtml }} />
         )}
       </Card>
+      
+      {/* carga archivo materiales del sap */}
+      <Card centered fluid>
+        <CardContent>
+          <CardHeader>Cargar Archivo excel de reporte de Materiales</CardHeader>
+          <CardDescription>
+            <form onSubmit={handleSubmit}>
+              <label >
+                <Input
+                  disabled={appStatus === APP_STATUS.UPLOADING}
+                  name='file'
+                  onChange={handleInputChange}
+                  type='file'
+                  accept='.xlsx'
+                />
+              </label>
+              {showButtonExcel && (
+                <Button secondary disabled={buttonExcelDisable}>
+                  Subir Excel
+                </Button>
+              )}
+            </form>
+          </CardDescription>
+        </CardContent>
+      </Card>
 
       {/* Cargamos el archivo de CONTACTOS */}
-      {(appStatus === APP_STATUS.IDLE || appStatus === APP_STATUS.UPLOADING || appStatus === APP_STATUS.READY_USAGE) && (
         <Card centered fluid>
           <CardContent>
             <CardHeader>Cargar los Contactos de un excel</CardHeader>
@@ -194,8 +198,8 @@ function App() {
                     accept='.xlsx'
                   />
                 </label>
-                {showButtonContact && (
-                  <Button secondary>
+                {(showButtonContact) && (
+                  <Button secondary disabled={buttonDisableContact}>
                     Subir Contactos
                   </Button>
                 )}
@@ -205,7 +209,7 @@ function App() {
 
           </CardContent>
         </Card>
-      )}
+
 
 
       {(dataContact && dataContact.length > 0) ? (
