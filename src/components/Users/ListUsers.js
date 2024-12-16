@@ -18,13 +18,6 @@ export const ListUsers = (props) => {
 
     const { jsonData, jsonDataContact } = props;
     //pasar el valor del check a true en todos los documentos del jsonDataContact
-
-    // const addCheckContact = jsonDataContact.map(item => ({
-    //     ...item, //mantiene los campos
-    //     checkToSend: true,
-    //     isSend: false // para cada contacto el tielde verde de enviado no se mostrara 
-    // }))
-
     //Inicializar datos con campos adicionales
     const addCheckContact = useMemo(
         () => jsonDataContact.map(item => ({
@@ -39,11 +32,9 @@ export const ListUsers = (props) => {
     const [dataSelect, setDataSelect] = useState(addCheckContact)
     const [buttonDisableReport, setButtonDisableReport] = useState(false)
     const [selectedSupervisor, setSelectedSupervisor] = useState(null)
+    const [allChecked, setAllChecked] = useState(true);
 
     //obtener lista unica de supervisores
-    // const supervisors =[
-    //     ...new Set(addCheckContact.map(contact => contact.Supervisor))
-    // ].map(supervisor => ({ key: supervisor, text: supervisor, value: supervisor }))
     const supervisors = useMemo(
         () =>
             [...new Set(addCheckContact.map(contact => contact.Supervisor))].map(supervisor => ({
@@ -52,41 +43,33 @@ export const ListUsers = (props) => {
                 value: supervisor,
             })),
         [addCheckContact]
-
     )
 
     //manejar los check 
-    const handleCheckboxChange = (index) => {
-        setDataSelect(prevData => prevData.map((item, indexOfData) =>
-            indexOfData === index
+    // El problema radica en cómo estamos manejando los índices en la función handleCheckboxChange. 
+    // Al filtrar los contactos, los índices de la lista filtrada no coinciden con los índices originales en dataSelect.
+    //  Esto provoca que se actualicen los datos incorrectos en dataSelect.
+    // Para solucionar este problema, necesitamos identificar de manera única cada contacto (por ejemplo, usando un identificador único como Numero) 
+    // en lugar de confiar en los índices de la lista filtrada.
+    const handleCheckboxChange = (almacen) => {
+        setDataSelect(prevData => prevData.map(item =>
+            item.Almacén === almacen
                 ? { ...item, checkToSend: !item.checkToSend }
                 : item
         ))
     }
 
-    //Boton de enviar 
-    // const handleButtonCharge = async () => {
-    //     //recorremos los contactos y manejamos las pormesas con Promise.all
-    //     // eslint-disable-next-line
-    //     const results = await Promise.all(filteredContacts.map(async (contact, index) => {  
-    //         if (contact.checkToSend) {
-    //             //filtramos los materiales por el almacen de contactos
-    //             const resultByAlmacen = jsonData.filter(material => (contact.Almacén === material.Almacén) && contact.checkToSend)
-    //             //llamamos a la API reportByNumber y obtenemos la respuesta
-    //             const res = await reportByNumber(contact.Numero, contact.Nombre, resultByAlmacen)
-    //             //actualizamos el estado de isSend para el contacto actual  
-    //             setTimeout(() => {
-    //                 setDataSelect(prevData => prevData.map((item, indexOfData) =>
-    //                     indexOfData === index ? { ...item, isSend: res.messageSent } : item   
-    //                 ))
-    //             }, 100);
+    //Manejar el checkbox de "Marcar todos"
+    const handleCheckAll = () => {
+        const newCheckState = !allChecked; //cambio de estado en general
+        setAllChecked(newCheckState)
+        setDataSelect(prevData => prevData.map( item => ({
+            ...item,
+            checkToSend: newCheckState,  // marcar o desmarcar todos
+        })))
+    }
 
-    //             console.log(res);               
-    //             return res
-    //         }
-    //     }))
-    //     if(results) setButtonDisableReport(!buttonDisableReport)
-    // }
+    //Boton de enviar 
     const handleButtonCharge = async () => {
         try {
             const results = await Promise.all(
@@ -105,10 +88,6 @@ export const ListUsers = (props) => {
                         }
                         console.log(res)
                         return res;
-
-                        // setDataSelect( prevData => prevData.map((item, indexOfData) => 
-                        //     indexOfData === index ? { ...item, isSend: res.messageSent} : item
-                        // ))
                     }
                 })
             )
@@ -120,9 +99,6 @@ export const ListUsers = (props) => {
 
 
     //filtrar contactos por supervisor seleccionado
-    // const filteredContacts = selectedSupervisor ?
-    //     dataSelect.filter(contact => contact.Supervisor === selectedSupervisor)
-    //     : dataSelect;
     const filteredContacts = useMemo(
         () =>
             selectedSupervisor ?
@@ -145,7 +121,12 @@ export const ListUsers = (props) => {
             <Table compact striped>
                 <TableHeader>
                     <TableRow>
-                        <TableHeaderCell />
+                        <TableHeaderCell>
+                            <Checkbox 
+                                checked={allChecked}  //Estado general de "CHECK'S"
+                                onChange={handleCheckAll}  //Manejar los cambios
+                            />
+                        </TableHeaderCell> 
                         <TableHeaderCell>Almacén</TableHeaderCell>
                         <TableHeaderCell>Nombre</TableHeaderCell>
                         <TableHeaderCell>Numero</TableHeaderCell>
@@ -160,7 +141,7 @@ export const ListUsers = (props) => {
                                 <TableCell>
                                     <Checkbox
                                         checked={contact.checkToSend} //establecer el estado si esta marcado
-                                        onChange={() => handleCheckboxChange(index)}  //manejar los cambios
+                                        onChange={() => handleCheckboxChange(contact.Almacén)}  //manejar los cambios
                                     />
                                 </TableCell>
                                 <TableCell>{contact.Almacén}</TableCell>
